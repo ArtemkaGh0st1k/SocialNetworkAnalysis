@@ -134,3 +134,16 @@ class VKParser():
 
         print(f"Данные успешно сохранены в файл: {full_path}")
 
+
+    def save_to_json(self, data, filename="samara_university_august_2026.json"):
+        """Сохраняет список постов в JSON-файл."""
+
+        if not data:
+            print("Нет данных для сохранения в JSON.")
+            return
+        
+        full_path = f"lab1/results/{filename}" 
+        with open(full_path, mode="w", encoding="utf-8") as file:
+            json.dump(data, file, ensure_ascii=False, indent=4)
+
+        print(f"Данные успешно сохранены в файл: {filename}")
