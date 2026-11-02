@@ -9,14 +9,18 @@ from sklearn.cluster import (AgglomerativeClustering,
                              MiniBatchKMeans)
 from sklearn.decomposition import PCA
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics import silhouette_score
 
 STATE = 42
+TOP_TERMS_COUNT = 10
 SAVE_PATH_DIR = Path(join("lab2", "results"))
 
 
-def perform_clustering_and_visualization(cleaned_texts, n_cluster=4):
-    """Выполняет TF-IDF векторизацию, кластеризацию (3 алгоритма)
-    и 2D-визуалзиацию через PCA"""
+def perform_clustering_and_visualization(cleaned_texts, lemmatized_texts, n_cluster=4):
+    """Выполняет TF-IDF векторизацию лемм, кластеризацию (3 алгоритма),
+    сохраняет распределение документов по кластерам и 2D-визуалзиацию через PCA"""
+
+    SAVE_PATH_DIR.mkdir(parents=True, exist_ok=True)
 
     if len(cleaned_texts) < n_cluster:
         print("Внимание: кол-во текстов меньше выбранного числа кластеров")
@@ -29,8 +33,17 @@ def perform_clustering_and_visualization(cleaned_texts, n_cluster=4):
                                  max_df=0.85,
                                  ngram_range=(1, 2))
 
-    X_sparse = vectorizer.fit_transform(cleaned_texts)
+    X_sparse = vectorizer.fit_transform(lemmatized_texts)
     X_dense = X_sparse.toarray()    # для алгоритмов, требующих плотную матрицу
+
+    print("Подбор числа кластеров по силуэтному коэффициенту (KMeans) ...")
+
+    for k in range(2, min(9, len(cleaned_texts))):
+        labels = KMeans(
+            n_clusters=k, random_state=STATE, n_init=10
+        ).fit_predict(X_sparse)
+        score = silhouette_score(X_sparse, labels, metric="cosine")
+        print(f"k = {k}: силуэт = {score:.3f}")
 
     print("Обучение алгоритмов кластеризации ...")
 
@@ -47,16 +60,49 @@ def perform_clustering_and_visualization(cleaned_texts, n_cluster=4):
         ).fit_predict(X_dense)
     }
 
+    # распределение документов по кластерам для каждого алгоритма
+    df_clusters = pd.DataFrame({"text" : cleaned_texts, **models})
+    df_clusters.to_csv(
+        SAVE_PATH_DIR / "cluster_assignments.csv", index=False, encoding="utf-8-sig"
+    )
+
+    # количество документов в каждом кластере и сравнение алгоритмов
+    sizes = []
+    for name, labels in models.items():
+        score = silhouette_score(X_sparse, labels, metric="cosine")
+        print(f"{name}: силуэт = {score:.3f}")
+
+        for cluster, count in pd.Series(labels).value_counts().sort_index().items():
+            sizes.append({"algorithm" : name, "cluster" : cluster, "documents" : count})
+
+    df_sizes = pd.DataFrame(sizes)
+    df_sizes.to_csv(
+        SAVE_PATH_DIR / "cluster_sizes.csv", index=False, encoding="utf-8-sig"
+    )
+    print(df_sizes.to_string(index=False))
+
     # выбираем основные метки для дальнейшей визуализации
     cluster_labels = models["KMeans"]
+
+    # самые весомые слова каждого кластера для описания его темы
+    terms = vectorizer.get_feature_names_out()
+    top_terms = []
+    for cluster in sorted(set(cluster_labels)):
+        weights = X_dense[cluster_labels == cluster].mean(axis=0)
+        words = terms[np.argsort(weights)[::-1][:TOP_TERMS_COUNT]]
+        top_terms.append({"cluster" : cluster, "top_terms" : ", ".join(words)})
+        print(f"Кластер {cluster}: {', '.join(words)}")
+
+    pd.DataFrame(top_terms).to_csv(
+        SAVE_PATH_DIR / "cluster_top_terms.csv", index=False, encoding="utf-8-sig"
+    )
 
     print("Снижение размерности с помощью PCA до 2D ...")
 
     pca = PCA(n_components=2, random_state=STATE)
     coords = pca.fit_transform(X_dense)
 
-    df_plot = pd.DataFrame
-    (
+    df_plot = pd.DataFrame(
         {
             "x" : coords[:, 0],
             "y" : coords[:, 1],
@@ -72,7 +118,7 @@ def perform_clustering_and_visualization(cleaned_texts, n_cluster=4):
         x="x", 
         y = "y",
         hue = "cluster",
-        palatte="tab10",
+        palette="tab10",
         data=df_plot,
         legend="full",
         s=80,
