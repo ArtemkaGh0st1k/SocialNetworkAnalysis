@@ -23,16 +23,16 @@ def analyze_word_frequrncy(cleaned_texts, output="word_frequency", format=".csv"
     # Дополнительные специфичные стоп-слова (опционально)
     custom_stop_words = \
     {
-        «год»,
-        «это»,
-        «который»,
-        «свой»,
-        «весь»,
-        «то»,
-        «так»,
-        «один»,
-        «еще»,
-        «уже»,
+        "год",
+        "это",
+        "который",
+        "свой",
+        "весь",
+        "то",
+        "так",
+        "один",
+        "еще",
+        "уже",
     }
     stop_words.update(custom_stop_words)
 
