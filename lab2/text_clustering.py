@@ -16,6 +16,15 @@ TOP_TERMS_COUNT = 10
 SAVE_PATH_DIR = Path(join("lab2", "results"))
 
 
+def build_tfidf_vectorizer():
+    """Создаёт TF-IDF векторизатор с единым набором параметров"""
+
+    return TfidfVectorizer(max_features=1000,
+                           min_df=2,
+                           max_df=0.85,
+                           ngram_range=(1, 2))
+
+
 def perform_clustering_and_visualization(cleaned_texts, lemmatized_texts, n_cluster=4):
     """Выполняет TF-IDF векторизацию лемм, кластеризацию (3 алгоритма),
     сохраняет распределение документов по кластерам и 2D-визуалзиацию через PCA"""
@@ -28,22 +37,10 @@ def perform_clustering_and_visualization(cleaned_texts, lemmatized_texts, n_clus
 
     print("Векторизация текстов с помощью TF_IDF ...")
 
-    vectorizer = TfidfVectorizer(max_features=1000,
-                                 min_df=2,
-                                 max_df=0.85,
-                                 ngram_range=(1, 2))
+    vectorizer = build_tfidf_vectorizer()
 
     X_sparse = vectorizer.fit_transform(lemmatized_texts)
     X_dense = X_sparse.toarray()    # для алгоритмов, требующих плотную матрицу
-
-    print("Подбор числа кластеров по силуэтному коэффициенту (KMeans) ...")
-
-    for k in range(2, min(9, len(cleaned_texts))):
-        labels = KMeans(
-            n_clusters=k, random_state=STATE, n_init=10
-        ).fit_predict(X_sparse)
-        score = silhouette_score(X_sparse, labels, metric="cosine")
-        print(f"k = {k}: силуэт = {score:.3f}")
 
     print("Обучение алгоритмов кластеризации ...")
 
@@ -118,6 +115,7 @@ def perform_clustering_and_visualization(cleaned_texts, lemmatized_texts, n_clus
         x="x", 
         y = "y",
         hue = "cluster",
+        style = "cluster",
         palette="tab10",
         data=df_plot,
         legend="full",
