@@ -4,11 +4,14 @@ import nltk
 from nltk.corpus import stopwords
 import pandas as pd
 import pymorphy2
+from os.path import join
+from pathlib import Path
 
-SAVE_PATH_DIR = "lab2" / "results"
+
+SAVE_PATH_DIR = Path(join("lab2", "results"))
 
 try:
-    nltk.data.load("corpora/stopwords")
+    nltk.data.find("corpora/stopwords")
 except LookupError:
     nltk.download("stopwords")
     

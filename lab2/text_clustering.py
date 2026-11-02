@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+from os.path import join
+from pathlib import Path
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -9,7 +11,7 @@ from sklearn.decomposition import PCA
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 STATE = 42
-SAVE_PATH_DIR = "lab2" / "results"
+SAVE_PATH_DIR = Path(join("lab2", "results"))
 
 
 def perform_clustering_and_visualization(cleaned_texts, n_cluster=4):

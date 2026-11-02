@@ -1,8 +1,12 @@
 import pandas as pd
 import re
+from os.path import join
+import emoji
 
-PATH_JSON = "lab1" / "results" / "samara_university_august_2026.json"
-PATH_CSV = "lab1" / "results" / "samara_university_august_2026.csv"
+
+PATH_JSON = join("lab1", "results", "samara_university_august_2026.json")
+PATH_CSV = join("lab1", "results", "samara_university_august_2026.csv")
+
 
 def load_and_clean_posts(file_path : str = PATH_CSV):
     """ Загружает данные постов, извлекает текст и очищает его от мусора,
@@ -28,13 +32,15 @@ def load_and_clean_posts(file_path : str = PATH_CSV):
         if not text.strip():
             continue  # пропускаем пустые строки
 
+        text = emoji.replace_emoji(text, replace="")
+
         # очистка url и ссылок
-        text_cleaned = re.sub(
+        text = re.sub(
             r"https?://\S+|www\.\S+", "", text, flags=re.MULTILINE
         )
 
         # замена переносов строк и множественных пробелов на один пробел
-        text_cleaned = re.sub(r"\s+", " ", text_cleaned).strip()  
+        text_cleaned = re.sub(r"\s+", " ", text).strip()  
 
         if text_cleaned:
             cleaned_texts.append(text_cleaned)
