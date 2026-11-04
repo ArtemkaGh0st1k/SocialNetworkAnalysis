@@ -51,6 +51,7 @@ class VKFriendsCollector():
         if not self.token:
             raise ValueError(f"API_TOKEN не найден в файле {ENV_PATH}!")
 
+        self.user = "three_nines999"
         vk_session = vk_api.VkApi(token=self.token)
         self.vk = vk_session.get_api()
 
@@ -125,7 +126,7 @@ class VKFriendsCollector():
         При повторном запуске продолжает сбор с места остановки"""
 
         if not user:
-            user = "three_nines999"
+            user = self.user
 
         user_id = self.resolve_user_id(user)
         path = SAVE_PATH_DIR / f"friends_{user_id}.json"
