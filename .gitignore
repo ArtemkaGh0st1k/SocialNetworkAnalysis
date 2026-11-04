@@ -218,6 +218,4 @@ __marimo__/
 .streamlit/secrets.toml
 
 # Списки друзей реальных пользователей VK
-lab3/results/friends_*.json
-lab3/results/friends_*.tmp
-lab3/results/graph_*
+lab3/results
