@@ -36,7 +36,15 @@ def lemmatize_texts(cleaned_texts):
         "так",
         "один",
         "еще",
+        "ещё",
         "уже",
+        "наш",
+        "ваш",
+        "всё",
+        "также",
+        "очень",
+        "именно",
+        "кроме",
     }
     stop_words.update(custom_stop_words)
 
