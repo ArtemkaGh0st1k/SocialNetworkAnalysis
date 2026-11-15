@@ -333,7 +333,7 @@ class PostsAnalyzer():
                 "effect" : self.to_percent(posts.loc[mask, "relative_engagement"].median()),
             })
 
-        return pd.DataFrame(rows).sort_values("effect")
+        return pd.DataFrame(rows).sort_values(["effect", "word"])
 
 
     def plot_words(self):
