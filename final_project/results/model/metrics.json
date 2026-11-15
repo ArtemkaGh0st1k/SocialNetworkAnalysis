@@ -1,0 +1,88 @@
+{
+    "Типичный пост": {
+        "valid": {
+            "MAE": 0.5603,
+            "R2": -0.0004,
+            "Spearman": null,
+            "sign_accuracy": 0.5024
+        },
+        "test": {
+            "MAE": 0.5948,
+            "R2": -0.0074,
+            "Spearman": null,
+            "sign_accuracy": 0.5044
+        }
+    },
+    "Медиана по формату": {
+        "valid": {
+            "MAE": 0.5535,
+            "R2": 0.0639,
+            "Spearman": 0.2305,
+            "sign_accuracy": 0.5633
+        },
+        "test": {
+            "MAE": 0.5779,
+            "R2": 0.0767,
+            "Spearman": 0.3117,
+            "sign_accuracy": 0.594
+        }
+    },
+    "Ridge (TF-IDF)": {
+        "valid": {
+            "MAE": 0.4666,
+            "R2": 0.2632,
+            "Spearman": 0.5718,
+            "sign_accuracy": 0.7033
+        },
+        "test": {
+            "MAE": 0.516,
+            "R2": 0.2475,
+            "Spearman": 0.5122,
+            "sign_accuracy": 0.6757
+        }
+    },
+    "CatBoost": {
+        "valid": {
+            "MAE": 0.4604,
+            "R2": 0.2769,
+            "Spearman": 0.5817,
+            "sign_accuracy": 0.705
+        },
+        "test": {
+            "MAE": 0.5128,
+            "R2": 0.2579,
+            "Spearman": 0.505,
+            "sign_accuracy": 0.6643
+        },
+        "feature_importance": {
+            "текст (все компоненты)": 81.82,
+            "group": 3.9,
+            "n_photos": 2.46,
+            "n_emoji": 2.44,
+            "month_of_year": 1.74,
+            "has_video": 1.71,
+            "hour": 1.45,
+            "n_links": 1.07,
+            "n_lines": 0.98,
+            "has_question": 0.64,
+            "n_hashtags": 0.44,
+            "has_link": 0.39,
+            "n_exclamations": 0.35,
+            "weekday": 0.34,
+            "has_poll": 0.24,
+            "has_doc": 0.02
+        },
+        "test_deciles_actual_percent": {
+            "1": -42.2,
+            "2": -20.5,
+            "3": -15.1,
+            "4": -10.4,
+            "5": -8.7,
+            "6": 3.4,
+            "7": 0.8,
+            "8": 13.8,
+            "9": 34.9,
+            "10": 191.1
+        }
+    }
+}
