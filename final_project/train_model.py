@@ -35,6 +35,7 @@ NUMERIC_FEATURES = \
 ]
 BOOLEAN_FEATURES = ["has_video", "has_link", "has_poll", "has_doc", "has_question"]
 CATEGORICAL_FEATURES = ["group"]
+RIDGE_CATEGORICAL_FEATURES = ["group", "hour", "weekday", "month_of_year"]
 COUNT_FEATURES = ["text_length", "n_lines", "n_hashtags", "n_links", "n_emoji", "n_exclamations"]
 
 COLOR_MAIN = "#2a78d6"
@@ -134,23 +135,29 @@ class EngagementModelTrainer():
         return table.drop(columns=["hour", "weekday", "month_of_year"]).values
 
 
+    def ridge_matrix(self, data, parts):
+        """Признаки для линейной модели: слова, оформление и категории"""
+
+        return hstack([
+            parts["vectorizer"].transform(data["lemmas"]),
+            parts["scaler"].transform(self.tabular_matrix(data)),
+            parts["encoder"].transform(data[RIDGE_CATEGORICAL_FEATURES]),
+        ]).tocsr()
+
+
     def fit_ridge(self):
         """Линейная модель на TF-IDF и признаках оформления"""
 
-        vectorizer = self.build_text_vectorizer().fit(self.train["lemmas"])
-        scaler = StandardScaler().fit(self.tabular_matrix(self.train))
-        encoder = OneHotEncoder(handle_unknown="ignore").fit(
-            self.train[["group", "hour", "weekday", "month_of_year"]]
-        )
+        parts = \
+        {
+            "vectorizer" : self.build_text_vectorizer().fit(self.train["lemmas"]),
+            "scaler" : StandardScaler().fit(self.tabular_matrix(self.train)),
+            "encoder" : OneHotEncoder(handle_unknown="ignore").fit(self.train[RIDGE_CATEGORICAL_FEATURES]),
+        }
 
-        def matrix(data):
-            return hstack([
-                vectorizer.transform(data["lemmas"]),
-                scaler.transform(self.tabular_matrix(data)),
-                encoder.transform(data[["group", "hour", "weekday", "month_of_year"]]),
-            ]).tocsr()
-
-        train_x, valid_x, test_x = matrix(self.train), matrix(self.valid), matrix(self.test)
+        train_x = self.ridge_matrix(self.train, parts)
+        valid_x = self.ridge_matrix(self.valid, parts)
+        test_x = self.ridge_matrix(self.test, parts)
 
         # силу регуляризации выбираем на проверочной выборке, тест не трогаем
         scores = {}
@@ -164,6 +171,9 @@ class EngagementModelTrainer():
         print(f"Ridge: лучшая alpha = {best_alpha}")
         self.add_result("Ridge (TF-IDF)", model.predict(valid_x), model.predict(test_x))
 
+        MODELS_DIR.mkdir(parents=True, exist_ok=True)
+        joblib.dump({**parts, "model" : model}, MODELS_DIR / "ridge.joblib")
+
 
     def catboost_matrix(self, data, svd, vectorizer):
         """Признаки для CatBoost: оформление, время, сообщество и сжатый текст"""
@@ -172,7 +182,7 @@ class EngagementModelTrainer():
         table[BOOLEAN_FEATURES] = table[BOOLEAN_FEATURES].astype(int)
 
         text = svd.transform(vectorizer.transform(data["lemmas"]))
-        text = pd.DataFrame(text, index=data.index, columns=[f"text_{i}" for i in range(text.shape[1])])
+        text = pd.DataFrame(text, index=data.index, columns=[f"svd_{i}" for i in range(text.shape[1])])
 
         return pd.concat([table, text], axis=1)
 
@@ -190,7 +200,8 @@ class EngagementModelTrainer():
         test_x = self.catboost_matrix(self.test, svd, vectorizer)
 
         model = CatBoostRegressor(iterations=3000, learning_rate=0.03, depth=6, loss_function="RMSE",
-                                  random_seed=STATE, verbose=0, cat_features=CATEGORICAL_FEATURES)
+                                  random_seed=STATE, verbose=0, cat_features=CATEGORICAL_FEATURES,
+                                  allow_writing_files=False)
 
         # число деревьев подбирается по проверочной выборке
         model.fit(train_x, self.train[TARGET], eval_set=(valid_x, self.valid[TARGET]),
@@ -200,8 +211,8 @@ class EngagementModelTrainer():
         self.add_result("CatBoost", model.predict(valid_x), model.predict(test_x))
 
         importance = pd.Series(model.get_feature_importance(), index=train_x.columns)
-        text_importance = importance[importance.index.str.startswith("text_")].sum()
-        importance = importance[~importance.index.str.startswith("text_")]
+        text_importance = importance[importance.index.str.startswith("svd_")].sum()
+        importance = importance[~importance.index.str.startswith("svd_")]
         importance["текст (все компоненты)"] = text_importance
         self.metrics["CatBoost"]["feature_importance"] = importance.sort_values(ascending=False).round(2).to_dict()
 

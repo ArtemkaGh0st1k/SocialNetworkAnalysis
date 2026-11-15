@@ -55,7 +55,8 @@
             "sign_accuracy": 0.6643
         },
         "feature_importance": {
-            "текст (все компоненты)": 81.82,
+            "текст (все компоненты)": 76.15,
+            "text_length": 5.67,
             "group": 3.9,
             "n_photos": 2.46,
             "n_emoji": 2.44,
